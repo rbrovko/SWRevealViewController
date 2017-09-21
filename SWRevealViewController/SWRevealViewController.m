@@ -896,7 +896,6 @@ const int FrontViewPositionNone = 0xff;
     return _panGestureRecognizer;
 }
 
-
 - (UITapGestureRecognizer*)tapGestureRecognizer
 {
     if ( _tapGestureRecognizer == nil )
@@ -948,7 +947,9 @@ const int FrontViewPositionNone = 0xff;
 {
     // we use the stored userInteraction state just in case a developer decided
     // to have our view interaction disabled beforehand
-    [_contentView setUserInteractionEnabled:_userInteractionStore];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [_contentView setUserInteractionEnabled:_userInteractionStore];
+    });
     [_contentView setDisableLayout:NO];
 }
 
@@ -1384,8 +1385,8 @@ const int FrontViewPositionNone = 0xff;
     void (^animations)() = ^()
     {
         // Calling this in the animation block causes the status bar to appear/dissapear in sync with our own animation
-        if ( [self respondsToSelector:@selector(setNeedsStatusBarAppearanceUpdate)])
-            [self performSelector:@selector(setNeedsStatusBarAppearanceUpdate) withObject:nil];
+//        if ( [self respondsToSelector:@selector(setNeedsStatusBarAppearanceUpdate)])
+//            [self performSelector:@selector(setNeedsStatusBarAppearanceUpdate) withObject:nil];
     
         // We call the layoutSubviews method on the contentView view and send a delegate, which will
         // occur inside of an animation block if any animated transition is being performed
@@ -1656,11 +1657,11 @@ const int FrontViewPositionNone = 0xff;
     if ( self.storyboard && _rearViewController == nil )
     {
         //Try each segue separately so it doesn't break prematurely if either Rear or Right views are not used.
-        @try
-        {
-            [self performSegueWithIdentifier:SWSegueRearIdentifier sender:nil];
-        }
-        @catch(NSException *exception) {}
+//        @try
+//        {
+//            [self performSegueWithIdentifier:SWSegueRearIdentifier sender:nil];
+//        }
+//        @catch(NSException *exception) {}
         
         @try
         {
@@ -1811,6 +1812,11 @@ NSString * const SWSegueRightIdentifier = @"sw_right";
     NSString *identifier = self.identifier;
     SWRevealViewController *rvc = self.sourceViewController;
     UIViewController *dvc = self.destinationViewController;
+    
+    if (![identifier isEqualToString:SWSegueFrontIdentifier] &&
+        [UIView userInterfaceLayoutDirectionForSemanticContentAttribute:dvc.view.semanticContentAttribute] == UIUserInterfaceLayoutDirectionRightToLeft) {
+        identifier = [identifier isEqualToString:SWSegueRearIdentifier] ? SWSegueRightIdentifier : SWSegueRearIdentifier;
+    }
     
     if ( [identifier isEqualToString:SWSegueFrontIdentifier] )
         operation = SWRevealControllerOperationReplaceFrontController;
